@@ -18,4 +18,23 @@ export class TwilioController {
     const room = await this.twilioService.createRoom(roomName);
     return room;
   }
+  @Post('start-recording')
+  async startRecording(@Body('roomSid') roomSid: string) {
+    return this.twilioService.startRecording(roomSid);
+  }
+
+  @Post('stop-recording')
+  async stopRecording(@Body('roomSid') roomSid: string) {
+    return this.twilioService.stopRecording(roomSid);
+  }
+  @Post('create-composition')
+  async createComposition(@Body('roomSid') roomSid: string) {
+    return this.twilioService.createComposition(roomSid);
+  }
+  @Get('get-composition-media-uri')
+  async getCompositionMediaUri(
+    @Query('compositionSid') compositionSid: string,
+  ) {
+    return this.twilioService.getCompositionMediaUri(compositionSid);
+  }
 }

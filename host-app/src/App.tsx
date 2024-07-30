@@ -7,8 +7,11 @@ const App: React.FC = () => {
   const [token, setToken] = useState<string>('');
   const [isCameraOn, setCameraOn] = useState(true);
   const [isMicOn, setMicOn] = useState(true);
+  const [isRecording, setIsRecording] = useState(false);
+  const [compositionUri, setCompositionUri] = useState<string | null>(null);
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const recordedVideoRef = useRef<HTMLVideoElement>(null);
   const roomName = 'test-room1';
 
   useEffect(() => {
@@ -75,6 +78,44 @@ const App: React.FC = () => {
     setMicOn(!isMicOn);
   };
 
+  const startRecording = async () => {
+    if (room) {
+      await axios.post('http://localhost:3000/twilio/start-recording', {
+        roomSid: room.sid,
+      });
+      setIsRecording(true);
+    }
+  };
+
+  const stopRecording = async () => {
+    if (room) {
+      await axios.post('http://localhost:3000/twilio/stop-recording', {
+        roomSid: room.sid,
+      });
+      setIsRecording(false);
+    }
+  };
+
+  const createComposition = async () => {
+    // if (room) {
+    const response = await axios.post(
+      'http://localhost:3000/twilio/create-composition',
+      null,
+      {
+        params: { roomName: roomName },
+      }
+    );
+    const compositionSid = response.data;
+    const uriResponse = await axios.get(
+      'http://localhost:3000/twilio/get-composition-media-uri',
+      {
+        params: { compositionSid },
+      }
+    );
+    setCompositionUri(uriResponse.data.media);
+    // }
+  };
+
   return (
     <div>
       <h1>Host App</h1>
@@ -112,6 +153,22 @@ const App: React.FC = () => {
       <button onClick={toggleMic}>
         {isMicOn ? 'Turn Off Mic' : 'Turn On Mic'}
       </button>
+      <button onClick={startRecording} disabled={isRecording}>
+        Start Recording
+      </button>
+      <button onClick={stopRecording} disabled={!isRecording}>
+        Stop Recording
+      </button>
+      <button onClick={createComposition}>Play Recorded Video</button>
+      {compositionUri && (
+        <video
+          ref={recordedVideoRef}
+          style={{ width: '640px', height: '360px', marginTop: '20px' }}
+          controls
+        >
+          <source src={compositionUri} type='video/mp4' />
+        </video>
+      )}
     </div>
   );
 };
